@@ -3,8 +3,9 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django.contrib.auth.decorators import login_required
 
-from .models import User
+from .models import User, Category, Listing, Watchlist, Comments, Bids
 
 
 def index(request):
@@ -24,9 +25,11 @@ def login_view(request):
             login(request, user)
             return HttpResponseRedirect(reverse("index"))
         else:
-            return render(request, "auctions/login.html", {
-                "message": "Invalid username and/or password."
-            })
+            return render(
+                request,
+                "auctions/login.html",
+                {"message": "Invalid username and/or password."},
+            )
     else:
         return render(request, "auctions/login.html")
 
@@ -45,19 +48,48 @@ def register(request):
         password = request.POST["password"]
         confirmation = request.POST["confirmation"]
         if password != confirmation:
-            return render(request, "auctions/register.html", {
-                "message": "Passwords must match."
-            })
+            return render(
+                request, "auctions/register.html", {"message": "Passwords must match."}
+            )
 
         # Attempt to create new user
         try:
             user = User.objects.create_user(username, email, password)
             user.save()
         except IntegrityError:
-            return render(request, "auctions/register.html", {
-                "message": "Username already taken."
-            })
+            return render(
+                request,
+                "auctions/register.html",
+                {"message": "Username already taken."},
+            )
         login(request, user)
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "auctions/register.html")
+
+
+@login_required
+def create(request):
+    if request.method == "POST":
+
+        user = request.user
+        title = request.POST["title"]
+        description = request.POST["description"]
+        image = request.POST["image"]
+        startingBid = int(request.POST["startingBid"])
+        category = Category.objects.get(id=request.POST["category"])
+
+        newListing = Listing(
+            title=title,
+            description=description,
+            image=image,
+            startingBid=startingBid,
+            category=category,
+            user=user,
+        )
+        newListing.save()
+
+        return HttpResponse("TRYING TO ADD LISTING")
+    else:
+        categories = Category.objects.all()
+        return render(request, "auctions/create.html", {"categories": categories})
