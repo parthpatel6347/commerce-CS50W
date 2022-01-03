@@ -9,7 +9,8 @@ from .models import User, Category, Listing, Watchlist, Comments, Bids
 
 
 def index(request):
-    return render(request, "auctions/index.html")
+    listings = Listing.objects.filter(active=True)
+    return render(request, "auctions/index.html", {"listings": listings})
 
 
 def login_view(request):
@@ -93,3 +94,12 @@ def create(request):
     else:
         categories = Category.objects.all()
         return render(request, "auctions/create.html", {"categories": categories})
+
+
+def listing(request, id):
+    if request.method == "POST":
+        return HttpResponse("POST REQUEST TO /listing")
+    else:
+        listing = Listing.objects.get(id=id)
+        print(listing)
+        return render(request, "auctions/listing.html", {"listing": listing})
