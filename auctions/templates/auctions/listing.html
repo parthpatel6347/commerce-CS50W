@@ -6,5 +6,13 @@
             <p>{{listing.description}}</p>
             <h5>${{listing.startingBid}}</h5>
             <div style="background-image: url({{listing.image}}); width: 200px; height:200px;">
+
+            {% if user.is_authenticated %}
+                <form action="{% url "watchlist" %}" method="post">
+                    {% csrf_token %}        
+                    <input type="hidden" value="{{listing.id}}" name="listing">
+                    <input type="submit" value="Add to Watchlist">
+                </form>
+            {% endif %}
         </div>
 {% endblock %}

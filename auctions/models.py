@@ -40,5 +40,7 @@ class Comments(models.Model):
 
 
 class Watchlist(models.Model):
-    Listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
+    Listing = models.ForeignKey(
+        Listing, on_delete=models.CASCADE, related_name="listing"
+    )
     user = models.ForeignKey(User, on_delete=models.CASCADE)

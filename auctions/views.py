@@ -4,6 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ObjectDoesNotExist
 
 from .models import User, Category, Listing, Watchlist, Comments, Bids
 
@@ -101,5 +102,55 @@ def listing(request, id):
         return HttpResponse("POST REQUEST TO /listing")
     else:
         listing = Listing.objects.get(id=id)
-        print(listing)
         return render(request, "auctions/listing.html", {"listing": listing})
+
+
+@login_required
+def watchlist(request):
+
+    # Get logged in user
+    user = request.user
+
+    if request.method == "POST":
+
+        # If post request has a key of "remove"
+        if request.POST.get("remove", ""):
+
+            # Get listing id of the item to be removed from the watchlist
+            listing = int(request.POST["remove"])
+
+            # delete item from watchlist database
+            Watchlist.objects.filter(user=user, Listing_id=listing).delete()
+
+            # redirect to watchlist page
+            return HttpResponseRedirect("watchlist")
+
+        else:
+
+            # get listing id of the item to be added in the watchlist
+            listing = int(request.POST["listing"])
+
+            # try to see the item already exists in the watchlist database
+            w = Watchlist.objects.filter(user=user, Listing_id=listing)
+
+            # If item doesn't exist in the database, add it
+            if not w:
+                watchlistItem = Watchlist(user=user, Listing_id=listing)
+                watchlistItem.save()
+
+                # redirect to watchlist page
+                return HttpResponseRedirect("watchlist")
+
+            else:
+                return HttpResponse("Item already in watchlist")
+
+    else:
+        # get listing ids from watchlist database for current user
+        ids = Watchlist.objects.values_list("Listing_id", flat=True).filter(user=user)
+
+        # get listing data corresponding to the listing ids
+        userWatchlist = Listing.objects.filter(id__in=ids)
+
+        return render(
+            request, "auctions/watchlist.html", {"userWatchlist": userWatchlist}
+        )

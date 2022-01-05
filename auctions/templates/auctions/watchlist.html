@@ -1,0 +1,25 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2>Watchlist</h2>
+    {% if not userWatchlist %}
+        <h3>Your watchlist is empty.</h3>
+    {% else %}
+        {% for listing in userWatchlist %}
+        <a href="{% url "listing" listing.id %}">
+            <div>
+                <h3>{{listing.title}}</h3>
+                <p>{{listing.description}}</p>
+                <h5>${{listing.startingBid}}</h5>
+                <div style="background-image: url({{listing.image}}); width: 200px; height:200px;">
+            </div>
+        </a>
+         <form action="{% url "watchlist" %}" method="post">
+                    {% csrf_token %}        
+            <input type="hidden" value="{{listing.id}}" name="remove">
+            <input type="submit" value="remove">
+        </form>
+        {% endfor %}
+    {% endif %}
+    
+{% endblock %}
