@@ -102,7 +102,14 @@ def listing(request, id):
         return HttpResponse("POST REQUEST TO /listing")
     else:
         listing = Listing.objects.get(id=id)
-        return render(request, "auctions/listing.html", {"listing": listing})
+
+        creator = False
+        if request.user and request.user == listing.user:
+            creator = True
+
+        return render(
+            request, "auctions/listing.html", {"listing": listing, "creator": creator}
+        )
 
 
 @login_required
@@ -154,3 +161,44 @@ def watchlist(request):
         return render(
             request, "auctions/watchlist.html", {"userWatchlist": userWatchlist}
         )
+
+
+@login_required
+def bid(request):
+    user = request.user
+
+    # Get bid amount and listing id from POST request
+    bid = int(request.POST["bid"])
+    listing = int(request.POST["listing"])
+
+    # get starting bid for listing
+    startingBid = Listing.objects.values_list("startingBid", flat=True).get(id=listing)
+
+    # return error if bid amount is less than starting bid
+    if bid < startingBid:
+        return HttpResponse("Error : bid cannot be less than starting bid")
+        #################################### handle error
+
+    # check if a bid on the listing already exists
+    if Bids.objects.filter(Listing_id=listing).exists():
+
+        # get the bid object for listing
+        b = Bids.objects.get(Listing_id=listing)
+
+        # Update bid for listing if bid is greater than current bid
+        if bid > b.amount:
+            b.user = user
+            b.amount = bid
+            b.save()
+            return HttpResponseRedirect(reverse("listing", args=(listing,)))
+
+        else:
+            return HttpResponse("Error : bid cannot be less than max bid")
+
+    else:
+
+        # Submit bid to database
+        newBid = Bids(user=user, Listing_id=listing, amount=bid)
+        newBid.save()
+
+        return HttpResponseRedirect(reverse("listing", args=(listing,)))
