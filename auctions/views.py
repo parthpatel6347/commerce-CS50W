@@ -111,10 +111,19 @@ def listing(request, id):
         if request.user and request.user == listing.user:
             creator = True
 
+        comments = Comments.objects.values_list("comment", flat=True).filter(
+            Listing_id=listing
+        )
+
         return render(
             request,
             "auctions/listing.html",
-            {"listing": listing, "creator": creator, "winner": winner},
+            {
+                "listing": listing,
+                "creator": creator,
+                "winner": winner,
+                "comments": comments,
+            },
         )
 
 
@@ -232,3 +241,16 @@ def close(request):
 
     else:
         return HttpResponse("No bids were placed on this listing.")
+
+
+@login_required
+def comment(request):
+
+    user = request.user
+    comment = request.POST["comment"]
+    listing = int(request.POST["listing"])
+
+    newComment = Comments(user=user, Listing_id=listing, comment=comment)
+    newComment.save()
+
+    return HttpResponseRedirect(reverse("listing", args=(listing,)))

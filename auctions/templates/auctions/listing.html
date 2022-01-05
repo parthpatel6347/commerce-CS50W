@@ -11,6 +11,13 @@
                 <h6>Winning bidder - {{listing.winner}}</h6>
             {% endif %}
             <div style="background-image: url({{listing.image}}); width: 200px; height:200px;">
+            <div style="background-color:white;">
+                {% for comment in comments %}
+                <h6>{{comment}}</h6>
+                {% empty %}
+                 <h6>No comments yet.</h6>
+                {% endfor %}
+            </div>
 
 
             {% if user.is_authenticated and listing.active%}
@@ -24,6 +31,12 @@
                     {% csrf_token %}        
                     <input type="hidden" value="{{listing.id}}" name="listing">
                     <input type="submit" value="Add to Watchlist">
+                </form>
+                <form action="{% url "comment" %}" method="post">
+                    {% csrf_token %}    
+                    <textarea name="comment"></textarea>
+                    <input type="hidden" value="{{listing.id}}" name="listing">
+                    <input type="submit" value="Add comment">
                 </form>
                 {% if creator and listing.active %}
                     <form action="{% url "close" %}" method="post">
