@@ -103,12 +103,18 @@ def listing(request, id):
     else:
         listing = Listing.objects.get(id=id)
 
+        winner = False
+        if request.user and request.user == listing.winner:
+            winner = True
+
         creator = False
         if request.user and request.user == listing.user:
             creator = True
 
         return render(
-            request, "auctions/listing.html", {"listing": listing, "creator": creator}
+            request,
+            "auctions/listing.html",
+            {"listing": listing, "creator": creator, "winner": winner},
         )
 
 
@@ -202,3 +208,27 @@ def bid(request):
         newBid.save()
 
         return HttpResponseRedirect(reverse("listing", args=(listing,)))
+
+
+@login_required
+def close(request):
+
+    listing = int(request.POST["listing"])
+
+    l = Listing.objects.get(id=listing)
+    l.active = False
+
+    if Bids.objects.filter(Listing_id=listing).exists():
+
+        b = Bids.objects.get(Listing_id=listing)
+
+        l.winner = b.user
+
+        winningBid = b.amount
+
+        l.save()
+
+        return HttpResponseRedirect(reverse("listing", args=(listing,)))
+
+    else:
+        return HttpResponse("No bids were placed on this listing.")
