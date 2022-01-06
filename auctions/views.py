@@ -254,3 +254,24 @@ def comment(request):
     newComment.save()
 
     return HttpResponseRedirect(reverse("listing", args=(listing,)))
+
+
+def categories(request):
+
+    # Get all categories from database
+    categories = Category.objects.all()
+
+    return render(request, "auctions/categories.html", {"categories": categories})
+
+
+def category(request, name):
+
+    # Get category object with name in url
+    category = Category.objects.get(name=name)
+
+    # Get all listings that have the requested category
+    listings = Listing.objects.filter(category=category)
+
+    return render(
+        request, "auctions/category.html", {"listings": listings, "category": category}
+    )
