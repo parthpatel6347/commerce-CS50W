@@ -19,6 +19,15 @@ def index(request):
     return render(request, "auctions/index.html", {"listings": listings, "bids": bids})
 
 
+def all(request):
+
+    listings = Listing.objects.all()
+
+    bids = Bids.objects.all()
+
+    return render(request, "auctions/all.html", {"listings": listings, "bids": bids})
+
+
 def login_view(request):
     if request.method == "POST":
 
@@ -118,6 +127,8 @@ def listing(request, id):
 
         comments = Comments.objects.filter(Listing_id=listing)
 
+        bids = Bids.objects.all()
+
         return render(
             request,
             "auctions/listing.html",
@@ -126,6 +137,7 @@ def listing(request, id):
                 "creator": creator,
                 "winner": winner,
                 "comments": comments,
+                "bids": bids,
             },
         )
 

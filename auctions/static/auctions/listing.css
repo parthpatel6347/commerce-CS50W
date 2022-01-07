@@ -25,6 +25,16 @@
     min-width: 300px;
 }
 
+.title-container{
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.title-container h3{
+    margin-right: 20px;
+}
+
 .comments-container{
     margin-top:20px;
 }
@@ -45,3 +55,5 @@
     color: rgb(67, 144, 226);
     text-align: end;
 }
+
+

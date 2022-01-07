@@ -1,0 +1,32 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2>All Listings</h2>
+    <div class="listings-container">
+        {% for listing in listings %}          
+            <div class="listing-main">
+                <a href="{% url "listing" listing.id %}">
+                    <div class="listing-content">
+                        <div class="listing-image" style="background-image: url({{listing.image}});"></div>
+                        <di class="listing-info">
+                            <h3 style="display:inline;" class="mb-2">{{listing.title}}</h3>
+                            {% if  not listing.active %}
+                                <span class="badge badge-danger">Closed</span>
+                            {% endif %}
+                            <p>{{listing.description}}</p>
+                            <h6>Starting Bid: ${{listing.startingBid}}</h6>
+                            {% for bid in bids %}
+                                {% if bid.Listing_id == listing.id %}
+                                    <h5> Current Bid: ${{bid.amount}} </h5>
+                                {% endif %}
+                            {% endfor %}
+                            {% if listing.winner %}
+                                <h6>Winning bidder - {{listing.winner}}</h6>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            </div>         
+        {% endfor %}
+    </div>
+{% endblock %}
