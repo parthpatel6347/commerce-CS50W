@@ -1,17 +1,35 @@
 {% extends "auctions/layout.html" %}
 {% block body %} 
-    <form action={% url "create" %} method="post">
-        {% csrf_token %}
-        <input type="text" name="title" required/>
-        <textarea name="description" required></textarea>
-        <input type="text" name="image"/>
-        <input type="number" name="startingBid" required/>
-        <select name="category">
-                <option disabled selected>Category</option>
-            {% for category in categories %}
-                <option value={{category.id}}>{{category.name}}</option>
-            {% endfor %}
-        </select>
-        <input type="submit" />
-    </form>
+    <div class="create-form">
+        <h3 class="mb-4">Create new listing</h3>
+        <form action={% url "create" %} method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" name="title" class="form-control" id="title" autocomplete="off" required/>
+            </div>
+            <div class="form-group">
+                <label for="description">Decription</label>
+                <textarea name="description" class="form-control" id="decription" rows="2" autocomplete="off" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="image">Image URL</label>
+                <input type="text" name="image" id="image" class="form-control" autocomplete="off"/>
+            </div>
+            <div class="form-group">
+                <label for="startingBid">Starting Bid</label>
+                <input type="number" name="startingBid" class="form-control" id="startingBid" min="0" autocomplete="off" required/>
+            </div>
+            <div class="form-group">
+                <label for="category">Category</label>
+                <select name="category" class="form-control" id="category">
+                        <option disabled selected>Category</option>
+                    {% for category in categories %}
+                        <option value={{category.id}}>{{category.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+                <button type="submit" class="btn btn-primary">Add Listing</button>     
+        </form>
+    </div>
 {% endblock %}

@@ -10,8 +10,13 @@ from .models import User, Category, Listing, Watchlist, Comments, Bids
 
 
 def index(request):
+
+    # Get all active listings from database
     listings = Listing.objects.filter(active=True)
-    return render(request, "auctions/index.html", {"listings": listings})
+
+    bids = Bids.objects.all()
+
+    return render(request, "auctions/index.html", {"listings": listings, "bids": bids})
 
 
 def login_view(request):
@@ -270,8 +275,11 @@ def category(request, name):
     category = Category.objects.get(name=name)
 
     # Get all listings that have the requested category
-    listings = Listing.objects.filter(category=category)
+    listings = Listing.objects.filter(category=category, active=True)
+    bids = Bids.objects.all()
 
     return render(
-        request, "auctions/category.html", {"listings": listings, "category": category}
+        request,
+        "auctions/category.html",
+        {"listings": listings, "category": category, "bids": bids},
     )

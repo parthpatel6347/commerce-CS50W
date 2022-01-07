@@ -2,14 +2,25 @@
 
 {% block body %}
     <h2>Active Listings</h2>
-    {% for listing in listings %}
-    <a href="{% url "listing" listing.id %}">
-        <div>
-            <h3>{{listing.title}}</h3>
-            <p>{{listing.description}}</p>
-            <h5>${{listing.startingBid}}</h5>
-            <div style="background-image: url({{listing.image}}); width: 200px; height:200px;">
-        </div>
-    </a>
-    {% endfor %}
+    <div class="listings-container">
+        {% for listing in listings %}          
+            <div class="listing-main">
+                <a href="{% url "listing" listing.id %}">
+                    <div class="listing-content">
+                        <div class="listing-image" style="background-image: url({{listing.image}});"></div>
+                        <div class="listing-info">
+                            <h3>{{listing.title}}</h3>
+                            <p>{{listing.description}}</p>
+                            <h6>Starting Bid: ${{listing.startingBid}}</h6>
+                            {% for bid in bids %}
+                                {% if bid.Listing_id == listing.id %}
+                                    <h5> Current Bid: ${{bid.amount}} </h5>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </a>
+            </div>         
+        {% endfor %}
+    </div>
 {% endblock %}
