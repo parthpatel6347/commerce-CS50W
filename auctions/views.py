@@ -116,9 +116,7 @@ def listing(request, id):
         if request.user and request.user == listing.user:
             creator = True
 
-        comments = Comments.objects.values_list("comment", flat=True).filter(
-            Listing_id=listing
-        )
+        comments = Comments.objects.filter(Listing_id=listing)
 
         return render(
             request,

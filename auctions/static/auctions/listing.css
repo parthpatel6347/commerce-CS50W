@@ -1,0 +1,47 @@
+.listing{
+    display:flex;
+}
+
+@media(max-width:800px){
+    .listing{
+        flex-direction: column;
+    }
+}
+
+.main-image{
+    width: 400px;
+    height: 400px;
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border:1px solid rgb(167, 167, 167);
+}
+
+.content-main{
+    display: flex;
+    flex-direction: column;
+    margin-left: 20px;
+    max-width: 400px;
+    min-width: 300px;
+}
+
+.comments-container{
+    margin-top:20px;
+}
+
+.comment{
+    background-color: rgb(228, 241, 255);
+    padding:10px 10px;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
+
+.comment p{
+    margin: 0;
+}
+
+.comment-user{
+    font-size: 14px;
+    color: rgb(67, 144, 226);
+    text-align: end;
+}
