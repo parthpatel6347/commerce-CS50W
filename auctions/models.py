@@ -18,7 +18,7 @@ class Listing(models.Model):
     title = models.CharField(max_length=128)
     description = models.TextField()
     startingBid = models.IntegerField()
-    image = models.TextField()
+    image = models.TextField(null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     active = BooleanField(default=True)

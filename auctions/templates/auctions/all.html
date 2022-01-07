@@ -8,7 +8,7 @@
                 <a href="{% url "listing" listing.id %}">
                     <div class="listing-content">
                         <div class="listing-image" style="background-image: url({{listing.image}});"></div>
-                        <di class="listing-info">
+                        <div class="listing-info">
                             <h3 style="display:inline;" class="mb-2">{{listing.title}}</h3>
                             {% if  not listing.active %}
                                 <span class="badge badge-danger">Closed</span>
@@ -22,6 +22,8 @@
                             {% endfor %}
                             {% if listing.winner %}
                                 <h6>Winning bidder - {{listing.winner}}</h6>
+                            {% elif not listing.winner and not listing.active %}
+                                 <h6>No bids were placed on this listing.</h6>
                             {% endif %}
                         </div>
                     </div>

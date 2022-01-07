@@ -1,10 +1,9 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ObjectDoesNotExist
 
 from .models import User, Category, Listing, Watchlist, Comments, Bids
 
@@ -14,6 +13,7 @@ def index(request):
     # Get all active listings from database
     listings = Listing.objects.filter(active=True)
 
+    # Get all bids from database
     bids = Bids.objects.all()
 
     return render(request, "auctions/index.html", {"listings": listings, "bids": bids})
@@ -21,8 +21,10 @@ def index(request):
 
 def all(request):
 
+    # Get all listings from database
     listings = Listing.objects.all()
 
+    # Get all bids from database
     bids = Bids.objects.all()
 
     return render(request, "auctions/all.html", {"listings": listings, "bids": bids})
@@ -89,12 +91,53 @@ def create(request):
     if request.method == "POST":
 
         user = request.user
-        title = request.POST["title"]
-        description = request.POST["description"]
-        image = request.POST["image"]
-        startingBid = int(request.POST["startingBid"])
-        category = Category.objects.get(id=request.POST["category"])
 
+        # Get title value or return error
+        if not request.POST.get("title"):
+            # return error
+            return render(
+                request,
+                "auctions/error.html",
+                {"error": "Unable to get Title value."},
+            )
+        else:
+            title = request.POST["title"]
+
+        # Get description value or return error
+        if not request.POST.get("description"):
+            # return error
+            return render(
+                request,
+                "auctions/error.html",
+                {"error": "Unable to get Description value."},
+            )
+        else:
+            description = request.POST["description"]
+
+        # Get startingBid value or return error
+        if not request.POST.get("startingBid"):
+            # return error
+            return render(
+                request,
+                "auctions/error.html",
+                {"error": "Unable to get starting bid value."},
+            )
+        else:
+            startingBid = int(request.POST["startingBid"])
+
+        # Set category to default if none specified.
+        if not request.POST.get("category"):
+            category = Category.objects.get(name="Other")
+        else:
+            category = Category.objects.get(id=request.POST["category"])
+
+        # Set a default image if none provided.
+        if not request.POST.get("image"):
+            image = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1665px-No-Image-Placeholder.svg.png"
+        else:
+            image = request.POST["image"]
+
+        # Create new database listing object
         newListing = Listing(
             title=title,
             description=description,
@@ -103,43 +146,62 @@ def create(request):
             category=category,
             user=user,
         )
+
+        # Save new listing
         newListing.save()
 
-        return HttpResponse("TRYING TO ADD LISTING")
+        return HttpResponseRedirect(reverse("index"))
+
     else:
         categories = Category.objects.all()
         return render(request, "auctions/create.html", {"categories": categories})
 
 
 def listing(request, id):
-    if request.method == "POST":
-        return HttpResponse("POST REQUEST TO /listing")
+
+    # Get listing with requested id
+    listing = Listing.objects.get(id=id)
+
+    # Check if logged in user is the winner of the listing
+    winner = False
+    if request.user and request.user == listing.winner:
+        winner = True
+
+    # Check if logged in user is the creator of the listing
+    creator = False
+    if request.user and request.user == listing.user:
+        creator = True
+
+    # Get all comments for the listing
+    comments = Comments.objects.filter(Listing_id=listing)
+
+    # Check if there is a bid on the listing
+    if Bids.objects.filter(Listing_id=listing).exists():
+        # get the bid object for listing
+        b = Bids.objects.get(Listing_id=listing)
+        bid = b.amount
     else:
-        listing = Listing.objects.get(id=id)
+        bid = None
 
-        winner = False
-        if request.user and request.user == listing.winner:
-            winner = True
+    inWatchlist = False
+    if (
+        request.user
+        and Watchlist.objects.filter(Listing_id=listing, user=request.user).exists()
+    ):
+        inWatchlist = True
 
-        creator = False
-        if request.user and request.user == listing.user:
-            creator = True
-
-        comments = Comments.objects.filter(Listing_id=listing)
-
-        bids = Bids.objects.all()
-
-        return render(
-            request,
-            "auctions/listing.html",
-            {
-                "listing": listing,
-                "creator": creator,
-                "winner": winner,
-                "comments": comments,
-                "bids": bids,
-            },
-        )
+    return render(
+        request,
+        "auctions/listing.html",
+        {
+            "listing": listing,
+            "creator": creator,
+            "winner": winner,
+            "comments": comments,
+            "bid": bid,
+            "inWatchlist": inWatchlist,
+        },
+    )
 
 
 @login_required
@@ -165,7 +227,15 @@ def watchlist(request):
         else:
 
             # get listing id of the item to be added in the watchlist
-            listing = int(request.POST["listing"])
+            # Get listing data or return error
+            if not request.POST.get("listing"):
+                return render(
+                    request,
+                    "auctions/error.html",
+                    {"error": "Unable to fetch listing data."},
+                )
+            else:
+                listing = int(request.POST["listing"])
 
             # try to see the item already exists in the watchlist database
             w = Watchlist.objects.filter(user=user, Listing_id=listing)
@@ -178,8 +248,13 @@ def watchlist(request):
                 # redirect to watchlist page
                 return HttpResponseRedirect("watchlist")
 
+            # return error if item is already in watchlist.
             else:
-                return HttpResponse("Item already in watchlist")
+                return render(
+                    request,
+                    "auctions/error.html",
+                    {"error": "Item is already in your Watchlist."},
+                )
 
     else:
         # get listing ids from watchlist database for current user
@@ -188,8 +263,11 @@ def watchlist(request):
         # get listing data corresponding to the listing ids
         userWatchlist = Listing.objects.filter(id__in=ids)
 
+        bids = Bids.objects.all()
         return render(
-            request, "auctions/watchlist.html", {"userWatchlist": userWatchlist}
+            request,
+            "auctions/watchlist.html",
+            {"userWatchlist": userWatchlist, "bids": bids},
         )
 
 
@@ -197,17 +275,36 @@ def watchlist(request):
 def bid(request):
     user = request.user
 
-    # Get bid amount and listing id from POST request
-    bid = int(request.POST["bid"])
-    listing = int(request.POST["listing"])
+    # Get bid amount or return error
+    if not request.POST.get("bid"):
+        return render(
+            request,
+            "auctions/error.html",
+            {"error": "Unable to fetch bid value."},
+        )
+    else:
+        bid = int(request.POST["bid"])
+
+    # Get listing data or return error
+    if not request.POST.get("listing"):
+        return render(
+            request,
+            "auctions/error.html",
+            {"error": "Unable to fetch listing data."},
+        )
+    else:
+        listing = int(request.POST["listing"])
 
     # get starting bid for listing
     startingBid = Listing.objects.values_list("startingBid", flat=True).get(id=listing)
 
     # return error if bid amount is less than starting bid
     if bid < startingBid:
-        return HttpResponse("Error : bid cannot be less than starting bid")
-        #################################### handle error
+        return render(
+            request,
+            "auctions/error.html",
+            {"error": "Bid cannot be less than starting bid."},
+        )
 
     # check if a bid on the listing already exists
     if Bids.objects.filter(Listing_id=listing).exists():
@@ -223,7 +320,11 @@ def bid(request):
             return HttpResponseRedirect(reverse("listing", args=(listing,)))
 
         else:
-            return HttpResponse("Error : bid cannot be less than max bid")
+            return render(
+                request,
+                "auctions/error.html",
+                {"error": "Bid cannot be less than maximum bid."},
+            )
 
     else:
 
@@ -237,34 +338,60 @@ def bid(request):
 @login_required
 def close(request):
 
-    listing = int(request.POST["listing"])
+    # Get listing data or return error
+    if not request.POST.get("listing"):
+        return render(
+            request,
+            "auctions/error.html",
+            {"error": "Unable to fetch listing data."},
+        )
+    else:
+        listing = int(request.POST["listing"])
 
+    # Get listing database object and set active to False
     l = Listing.objects.get(id=listing)
     l.active = False
 
+    # If there was a bid on the listing, set listing winner to the user who bid.
     if Bids.objects.filter(Listing_id=listing).exists():
 
         b = Bids.objects.get(Listing_id=listing)
 
         l.winner = b.user
 
-        winningBid = b.amount
+    # Save modified listing object
+    l.save()
 
-        l.save()
-
-        return HttpResponseRedirect(reverse("listing", args=(listing,)))
-
-    else:
-        return HttpResponse("No bids were placed on this listing.")
+    return HttpResponseRedirect(reverse("listing", args=(listing,)))
 
 
 @login_required
 def comment(request):
 
+    # get logged in user
     user = request.user
-    comment = request.POST["comment"]
-    listing = int(request.POST["listing"])
 
+    # Get comment data or return error
+    if not request.POST.get("comment"):
+        return render(
+            request,
+            "auctions/error.html",
+            {"error": "Unable to fetch Comment."},
+        )
+    else:
+        comment = request.POST["comment"]
+
+    # Get listing data or return error
+    if not request.POST.get("listing"):
+        return render(
+            request,
+            "auctions/error.html",
+            {"error": "Unable to fetch listing data."},
+        )
+    else:
+        listing = int(request.POST["listing"])
+
+    # Create and save new comment database object
     newComment = Comments(user=user, Listing_id=listing, comment=comment)
     newComment.save()
 

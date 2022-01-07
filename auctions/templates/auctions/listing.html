@@ -17,31 +17,43 @@
                 <p>{{listing.description}}</p>
 
                 {% if user.is_authenticated and listing.active%}
-                    <form action="{% url "watchlist" %}" method="post">
+                    {% if inWatchlist %}
+                        <form action="{% url "watchlist" %}" method="post">
+                            {% csrf_token %}        
+                            <input type="hidden" value="{{listing.id}}" name="remove">
+                            <button type="submit" class="btn btn-outline-danger mb-3">Remove from Watchlist</button>
+                        </form>
+                    {% else %}
+                        <form action="{% url "watchlist" %}" method="post">
                             {% csrf_token %}        
                             <input type="hidden" value="{{listing.id}}" name="listing">
                             <button type="submit" class="btn btn-outline-primary mb-3">Add to Watchlist</button>
-                    </form>
+                         </form>
+                    {% endif %}
                 {% endif %}
 
                 <h6>Starting Bid: ${{listing.startingBid}}</h6>
-                {% for bid in bids %}
-                    {% if bid.Listing_id == listing.id %}
-                        <h5> Current Bid: ${{bid.amount}} </h5>
+                    {% if bid %}
+                        <h5> Current Bid: ${{bid}} </h5>
                     {% endif %}
-                {% endfor %}
 
                 {% if listing.winner and winner%}
                     <h6>You have the winning Bid!</h6>
                 {% elif listing.winner %}
                     <h6>Winning bidder - {{listing.winner}}</h6>
+                {% elif not listing.winner and not listing.active %}
+                    <h6>No bids were placed on this listing.</h6>
                 {% endif %}
 
                 {% if user.is_authenticated and listing.active%}
                     <form action="{% url "bid" %}" method="post">
                         {% csrf_token %}        
                         <div class="form-group mt-2">
-                            <input type="number" name="bid" min="{{listing.startingBid}}" class="form-control">
+                            {% if bid %}
+                                <input type="number" name="bid" min="{{bid | add:"1"}}" class="form-control" required>
+                            {% else %}
+                                <input type="number" name="bid" min="{{listing.startingBid}}" class="form-control" required>
+                            {% endif %}
                             <input type="hidden" value="{{listing.id}}" name="listing">
                             <button type="submit" class="btn btn-primary mt-2">Place bid</button>
                         </div>
@@ -63,7 +75,7 @@
                     <form action="{% url "comment" %}" method="post">
                         {% csrf_token %}    
                         <div class="form-group mt-2">
-                            <textarea name="comment" placeholder="Add comment" class="form-control"></textarea>
+                            <textarea name="comment" placeholder="Add comment" class="form-control" required></textarea>
                             <input type="hidden" value="{{listing.id}}" name="listing">
                             <button type="submit" class="btn btn-primary mt-2">Add comment</button>
                         </div>

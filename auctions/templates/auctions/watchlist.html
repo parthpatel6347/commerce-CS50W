@@ -6,19 +6,37 @@
         <h3>Your watchlist is empty.</h3>
     {% else %}
         {% for listing in userWatchlist %}
-        <a href="{% url "listing" listing.id %}">
-            <div>
-                <h3>{{listing.title}}</h3>
-                <p>{{listing.description}}</p>
-                <h5>${{listing.startingBid}}</h5>
-                <div style="background-image: url({{listing.image}}); width: 200px; height:200px;">
-            </div>
-        </a>
-         <form action="{% url "watchlist" %}" method="post">
-                    {% csrf_token %}        
-            <input type="hidden" value="{{listing.id}}" name="remove">
-            <input type="submit" value="remove">
-        </form>
+        <div class="listing-main">
+                <a href="{% url "listing" listing.id %}">
+                    <div class="listing-content">
+                        <div class="listing-image" style="background-image: url({{listing.image}});"></div>
+                        <div class="listing-info">
+                            <h3 style="display:inline;" class="mb-2">{{listing.title}}</h3>
+                            {% if  not listing.active %}
+                                <span class="badge badge-danger">Closed</span>
+                            {% endif %}
+                            <p>{{listing.description}}</p>
+                            <h6>Starting Bid: ${{listing.startingBid}}</h6>
+                            {% for bid in bids %}
+                                {% if bid.Listing_id == listing.id %}
+                                    <h5> Current Bid: ${{bid.amount}} </h5>
+                                {% endif %}
+                            {% endfor %}
+                            {% if listing.winner %}
+                                <h6>Winning bidder - {{listing.winner}}</h6>
+                            {% elif not listing.winner and not listing.active %}
+                                 <h6>No bids were placed on this listing.</h6>
+                            {% endif %}
+                            <form action="{% url "watchlist" %}" method="post">
+                                {% csrf_token %}        
+                                <input type="hidden" value="{{listing.id}}" name="remove">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+                            </form>
+                        </div>
+                    </div>
+                </a>
+            </div>         
+         
         {% endfor %}
     {% endif %}
     
