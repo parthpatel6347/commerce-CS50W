@@ -164,12 +164,12 @@ def listing(request, id):
 
     # Check if logged in user is the winner of the listing
     winner = False
-    if request.user and request.user == listing.winner:
+    if request.user.is_authenticated and request.user == listing.winner:
         winner = True
 
     # Check if logged in user is the creator of the listing
     creator = False
-    if request.user and request.user == listing.user:
+    if request.user.is_authenticated and request.user == listing.user:
         creator = True
 
     # Get all comments for the listing
@@ -184,8 +184,9 @@ def listing(request, id):
         bid = None
 
     inWatchlist = False
+
     if (
-        request.user
+        request.user.is_authenticated
         and Watchlist.objects.filter(Listing_id=listing, user=request.user).exists()
     ):
         inWatchlist = True
